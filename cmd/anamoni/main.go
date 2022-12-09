@@ -11,11 +11,21 @@ import (
 	"time"
 )
 
+var n int
+
+func init() {
+	flag.IntVar(&n, "n", 1, "n 回以上連続してタイムアウトした場合にサーバーの故障とみなす。")
+}
+
 func main() {
 	flag.Parse()
 	args := flag.Args()
 	if len(args) != 1 {
 		log.Fatal("引数が足りません")
+	}
+
+	if n < 1 {
+		log.Fatal("n は 1 以上の整数を指定してください")
 	}
 
 	filename := args[0]
@@ -45,7 +55,7 @@ func main() {
 
 	logs.Sort()
 
-	tm := anamoni.Analyze(logs)
+	tm := anamoni.Analyze(logs, n)
 
 	tmSlice := tm.ToSlice()
 	for i, t := range tmSlice {

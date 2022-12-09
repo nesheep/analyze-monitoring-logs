@@ -105,3 +105,16 @@ func (ls Logs) Sort() {
 		return ls[i].Time.Before(ls[j].Time)
 	})
 }
+
+func (ls Logs) Servers() []string {
+	sl := []string{}
+	m := map[string]bool{}
+	for _, l := range ls {
+		addr := l.Address()
+		if !m[addr] {
+			m[addr] = true
+			sl = append(sl, addr)
+		}
+	}
+	return sl
+}

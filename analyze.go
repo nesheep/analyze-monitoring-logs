@@ -1,80 +1,47 @@
 package anamoni
 
-import (
-	"sort"
-	"time"
-)
-
-// Trouble 障害情報を保持する構造体。
-type Trouble struct {
-	Addr  string
-	Start *time.Time
-	End   *time.Time
-}
-
-func NewTrouble(addr string, start time.Time) Trouble {
-	return Trouble{Addr: addr, Start: &start}
-}
-
-func (t *Trouble) SetEnd(end time.Time) {
-	t.End = &end
-}
-
-type Troubles []Trouble
-
-// TroublesMap はIPアドレスごとの Troubles を記録する。
-type TroublesMap map[string]Troubles
-
-func (tm TroublesMap) ToSlice() Troubles {
-	sl := Troubles{}
-	for _, ts := range tm {
-		sl = append(sl, ts...)
-	}
-
-	sort.Slice(sl, func(i, j int) bool {
-		if sl[i].Start == nil {
-			if sl[j].Start == nil {
-				return sl[i].End.Before(*sl[j].End)
-			}
-			return true
-		}
-		if sl[j].Start == nil {
-			return false
-		}
-		return sl[i].Start.Before(*sl[j].Start)
-	})
-
-	return sl
-}
-
 // Analyze は logs 分析を行って TroublesMap を返す。
-func Analyze(logs Logs) TroublesMap {
+func Analyze(logs Logs, breakJudgment int) TroublesMap {
 	tm := TroublesMap{}
+	srvm := ServerStatusMap{}
+
+	servers := logs.Servers()
+	for _, addr := range servers {
+		tm[addr] = Troubles{}
+		srvm[addr] = &ServerStatus{}
+	}
 
 	for _, l := range logs {
 		addr := l.Address()
-		ts := tm[addr]
+		srvs := srvm[addr]
+		srvm[addr].Logs = append(srvm[addr].Logs, l)
 
-		// 各サーバーの 1 件目のログ処理
-		if ts == nil {
-			tm[addr] = Troubles{}
-			if l.Timeouted {
+		if len(srvs.Logs) < breakJudgment {
+			continue
+		}
+
+		isBroken := true
+		for i := 0; i < breakJudgment; i++ {
+			if !srvs.Logs[len(srvs.Logs)-1-i].Timeouted {
+				isBroken = false
+				break
+			}
+		}
+
+		if isBroken {
+			if len(srvs.Logs) == breakJudgment {
+				// 1 件目のログから故障していた場合
 				tm[addr] = append(tm[addr], Trouble{Addr: addr})
+			} else if !srvs.IsBroken {
+				// 非故障中から故障中になる場合
+				tm[addr] = append(tm[addr], NewTrouble(addr, srvs.Logs[len(srvs.Logs)-breakJudgment].Time))
 			}
-			continue
+		} else if srvs.IsBroken {
+			// 故障中から非故障中になる場合
+			tm[addr][len(tm[addr])-1].SetEnd(l.Time)
 		}
 
-		// 各サーバーの 2 件目以降のログ処理
-		if l.Timeouted {
-			if len(ts) == 0 || ts[len(ts)-1].End != nil {
-				tm[addr] = append(tm[addr], NewTrouble(addr, l.Time))
-			}
-			continue
-		}
-
-		if len(ts) > 0 && ts[len(ts)-1].End == nil {
-			ts[len(ts)-1].SetEnd(l.Time)
-		}
+		srvm[addr].IsBroken = isBroken
 	}
 
 	return tm
