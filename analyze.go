@@ -12,8 +12,12 @@ type Trouble struct {
 	End   *time.Time
 }
 
-func NewTrouble(addr string, start *time.Time) Trouble {
-	return Trouble{Addr: addr, Start: start}
+func NewTrouble(addr string, start time.Time) Trouble {
+	return Trouble{Addr: addr, Start: &start}
+}
+
+func (t *Trouble) SetEnd(end time.Time) {
+	t.End = &end
 }
 
 type Troubles []Trouble
@@ -55,7 +59,7 @@ func Analyze(logs Logs) TroublesMap {
 		if ts == nil {
 			tm[addr] = Troubles{}
 			if l.Timeouted {
-				tm[addr] = append(tm[addr], NewTrouble(addr, nil))
+				tm[addr] = append(tm[addr], Trouble{Addr: addr})
 			}
 			continue
 		}
@@ -63,13 +67,13 @@ func Analyze(logs Logs) TroublesMap {
 		// 各サーバーの 2 件目以降のログ処理
 		if l.Timeouted {
 			if len(ts) == 0 || ts[len(ts)-1].End != nil {
-				tm[addr] = append(tm[addr], NewTrouble(addr, &l.Time))
+				tm[addr] = append(tm[addr], NewTrouble(addr, l.Time))
 			}
 			continue
 		}
 
 		if len(ts) > 0 && ts[len(ts)-1].End == nil {
-			ts[len(ts)-1].End = &l.Time
+			ts[len(ts)-1].SetEnd(l.Time)
 		}
 	}
 
