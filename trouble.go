@@ -20,7 +20,39 @@ func (t *Trouble) SetEnd(end time.Time) {
 	t.End = &end
 }
 
+func (t *Trouble) intersection(addr string, o Trouble) *Trouble {
+	start := *t.Start
+	end := *t.End
+	if start.Before(*o.Start) {
+		start = *o.Start
+	}
+	if end.After(*o.End) {
+		end = *o.End
+	}
+	if start.After(end) {
+		return nil
+	}
+	return &Trouble{
+		Addr:  addr,
+		Start: &start,
+		End:   &end,
+	}
+}
+
 type Troubles []Trouble
+
+func (ts Troubles) intersections(addr string, o Troubles) Troubles {
+	is := Troubles{}
+	for _, a := range ts {
+		for _, b := range o {
+			intersection := a.intersection(addr, b)
+			if intersection != nil {
+				is = append(is, *intersection)
+			}
+		}
+	}
+	return is
+}
 
 // TroublesMap はIPアドレスごとの Troubles を記録する。
 type TroublesMap map[string]Troubles

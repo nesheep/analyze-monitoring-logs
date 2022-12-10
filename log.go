@@ -96,6 +96,10 @@ func (l Log) Address() string {
 	return l.IP.String()
 }
 
+func (l Log) Subnet() string {
+	return l.IP.Mask(l.Mask).String()
+}
+
 // Logs はログファイルの全ての行の情報を格納する。
 type Logs []Log
 
@@ -115,6 +119,27 @@ func (ls Logs) Servers() []string {
 			m[addr] = true
 			sl = append(sl, addr)
 		}
+	}
+	return sl
+}
+
+func (ls Logs) Subnets() Subnets {
+	subnetMap := map[string]*Subnet{}
+	serverMap := map[string]bool{}
+	for _, l := range ls {
+		subnet := l.Subnet()
+		addr := l.Address()
+		if subnetMap[subnet] == nil {
+			subnetMap[subnet] = NewSubnet(subnet)
+		}
+		if !serverMap[addr] {
+			serverMap[addr] = true
+			subnetMap[subnet].Servers = append(subnetMap[subnet].Servers, addr)
+		}
+	}
+	sl := Subnets{}
+	for _, v := range subnetMap {
+		sl = append(sl, *v)
 	}
 	return sl
 }

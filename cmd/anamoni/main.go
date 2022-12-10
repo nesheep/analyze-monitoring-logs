@@ -67,21 +67,26 @@ func main() {
 
 	logs.Sort()
 
-	bm, om := anamoni.Analyze(logs, n, m, t)
+	brokens, overloads, snBrokens := anamoni.Analyze(logs, n, m, t)
 
-	bmSlice := bm.ToSlice()
-	if len(bmSlice) > 0 {
+	if len(brokens) > 0 {
 		fmt.Println("サーバー故障期間")
 	}
-	for i, t := range bmSlice {
+	for i, t := range brokens {
 		fmt.Printf("%d\t%s\t%s\t%s\n", i+1, t.Addr, formatTime(t.Start), formatTime(t.End))
 	}
 
-	omSlice := om.ToSlice()
-	if len(omSlice) > 0 {
+	if len(overloads) > 0 {
 		fmt.Println("サーバー過負荷期間")
 	}
-	for i, t := range omSlice {
+	for i, t := range overloads {
+		fmt.Printf("%d\t%s\t%s\t%s\n", i+1, t.Addr, formatTime(t.Start), formatTime(t.End))
+	}
+
+	if len(snBrokens) > 0 {
+		fmt.Println("サブネット故障期間")
+	}
+	for i, t := range snBrokens {
 		fmt.Printf("%d\t%s\t%s\t%s\n", i+1, t.Addr, formatTime(t.Start), formatTime(t.End))
 	}
 }

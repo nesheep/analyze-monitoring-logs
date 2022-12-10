@@ -1,17 +1,17 @@
 package anamoni
 
 // Analyze は logs 分析を行って TroublesMap を返す。
-func Analyze(logs Logs, breakJudgment, overloadJudgment, overloadTime int) (TroublesMap, TroublesMap) {
+func Analyze(logs Logs, breakJudgment, overloadJudgment, overloadTime int) (Troubles, Troubles, Troubles) {
 	bm := TroublesMap{}
 	om := TroublesMap{}
 	srvm := ServerStatusMap{}
 
 	servers := logs.Servers()
 	for _, addr := range servers {
-		bm[addr] = Troubles{}
 		srvm[addr] = &ServerStatus{}
 	}
 
+	// サーバーに関する検査
 	for _, l := range logs {
 		addr := l.Address()
 		srvs := srvm[addr]
@@ -50,5 +50,9 @@ func Analyze(logs Logs, breakJudgment, overloadJudgment, overloadTime int) (Trou
 		srvm[addr].IsOverloaded = isOverloaded
 	}
 
-	return bm, om
+	// サブネットに関する検査
+	subnets := logs.Subnets()
+	snBrokens := subnets.Brokens(bm)
+
+	return bm.ToSlice(), om.ToSlice(), snBrokens
 }
