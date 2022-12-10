@@ -19,11 +19,30 @@ func (s Subnet) Has(server string) bool {
 	return false
 }
 
+func (s Subnet) ExistsAll(srvs []string) bool {
+	for _, a := range s.Servers {
+		exists := false
+		for _, b := range srvs {
+			if b == a {
+				exists = true
+				break
+			}
+		}
+		if !exists {
+			return false
+		}
+	}
+	return true
+}
+
 type Subnets []Subnet
 
 func (ss Subnets) Brokens(brokenMap TroublesMap) Troubles {
 	ts := Troubles{}
 	for _, sn := range ss {
+		if !sn.ExistsAll(brokenMap.Servers()) {
+			continue
+		}
 		tmp := brokenMap[sn.Servers[0]]
 		for k, troubles := range brokenMap {
 			if !sn.Has(k) {

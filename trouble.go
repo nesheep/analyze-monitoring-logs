@@ -64,6 +64,14 @@ func (ts Troubles) Intersections(addr string, o Troubles) Troubles {
 // TroublesMap はIPアドレスごとの Troubles を記録する。
 type TroublesMap map[string]Troubles
 
+func (tm TroublesMap) Servers() []string {
+	sl := []string{}
+	for k := range tm {
+		sl = append(sl, k)
+	}
+	return sl
+}
+
 func (tm TroublesMap) ToSlice() Troubles {
 	sl := Troubles{}
 	for _, ts := range tm {
