@@ -18,21 +18,44 @@ func NewDuration(start, end *time.Time) Duration {
 // Intersection は他の Duration を受け取って共通期間を返す。
 // 共通期間が存在しないときは nil を返す。
 func (d *Duration) Intersection(o Duration) *Duration {
-	start := *d.Start
-	end := *d.End
-	if start.Before(*o.Start) {
-		start = *o.Start
-	}
-	if end.After(*o.End) {
-		end = *o.End
-	}
-	if start.After(end) {
+	start := laterStart(d.Start, o.Start)
+	end := earlierEnd(d.End, o.End)
+	if start != nil && end != nil && start.After(*end) {
 		return nil
 	}
-	return &Duration{
-		Start: &start,
-		End:   &end,
+	return &Duration{Start: start, End: end}
+}
+
+func laterStart(a, b *time.Time) *time.Time {
+	if a == nil {
+		if b == nil {
+			return nil
+		}
+		return b
 	}
+	if b == nil {
+		return a
+	}
+	if a.After(*b) {
+		return a
+	}
+	return b
+}
+
+func earlierEnd(a, b *time.Time) *time.Time {
+	if a == nil {
+		if b == nil {
+			return nil
+		}
+		return b
+	}
+	if b == nil {
+		return a
+	}
+	if a.Before(*b) {
+		return a
+	}
+	return b
 }
 
 // Trouble は障害情報を保持する構造体。
@@ -66,6 +89,28 @@ func (ts Troubles) Intersections(addr string, o Troubles) Troubles {
 	return is
 }
 
+// Sort は Troubles を古い順にソートする。
+func (ts Troubles) Sort() {
+	sort.Slice(ts, func(i, j int) bool {
+		if ts[i].Start == nil {
+			if ts[j].Start == nil {
+				if ts[i].End == nil {
+					return false
+				}
+				if ts[j].End == nil {
+					return true
+				}
+				return ts[i].End.Before(*ts[j].End)
+			}
+			return true
+		}
+		if ts[j].Start == nil {
+			return false
+		}
+		return ts[i].Start.Before(*ts[j].Start)
+	})
+}
+
 // TroublesMap は IP アドレスごとの Troubles を記録する。
 type TroublesMap map[string]Troubles
 
@@ -82,19 +127,6 @@ func (tm TroublesMap) ToSlice() Troubles {
 	for _, ts := range tm {
 		sl = append(sl, ts...)
 	}
-
-	sort.Slice(sl, func(i, j int) bool {
-		if sl[i].Start == nil {
-			if sl[j].Start == nil {
-				return sl[i].End.Before(*sl[j].End)
-			}
-			return true
-		}
-		if sl[j].Start == nil {
-			return false
-		}
-		return sl[i].Start.Before(*sl[j].Start)
-	})
-
+	sl.Sort()
 	return sl
 }
