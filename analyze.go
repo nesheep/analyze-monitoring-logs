@@ -1,13 +1,14 @@
 package anamoni
 
 // Analyze は logs 分析を行って TroublesMap を返す。
-func Analyze(logs Logs, breakJudgment int) TroublesMap {
-	tm := TroublesMap{}
+func Analyze(logs Logs, breakJudgment, overloadJudgment, overloadTime int) (TroublesMap, TroublesMap) {
+	bm := TroublesMap{}
+	om := TroublesMap{}
 	srvm := ServerStatusMap{}
 
 	servers := logs.Servers()
 	for _, addr := range servers {
-		tm[addr] = Troubles{}
+		bm[addr] = Troubles{}
 		srvm[addr] = &ServerStatus{}
 	}
 
@@ -16,33 +17,38 @@ func Analyze(logs Logs, breakJudgment int) TroublesMap {
 		srvs := srvm[addr]
 		srvm[addr].Logs = append(srvm[addr].Logs, l)
 
-		if len(srvs.Logs) < breakJudgment {
-			continue
-		}
-
-		isBroken := true
-		for i := 0; i < breakJudgment; i++ {
-			if !srvs.Logs[len(srvs.Logs)-1-i].Timeouted {
-				isBroken = false
-				break
-			}
-		}
-
+		// 故障検査
+		isBroken := srvs.CheckBroken(breakJudgment)
 		if isBroken {
 			if len(srvs.Logs) == breakJudgment {
 				// 1 件目のログから故障していた場合
-				tm[addr] = append(tm[addr], Trouble{Addr: addr})
+				bm[addr] = append(bm[addr], Trouble{Addr: addr})
 			} else if !srvs.IsBroken {
 				// 非故障中から故障中になる場合
-				tm[addr] = append(tm[addr], NewTrouble(addr, srvs.Logs[len(srvs.Logs)-breakJudgment].Time))
+				bm[addr] = append(bm[addr], NewTrouble(addr, srvs.Logs[len(srvs.Logs)-breakJudgment].Time))
 			}
 		} else if srvs.IsBroken {
 			// 故障中から非故障中になる場合
-			tm[addr][len(tm[addr])-1].SetEnd(l.Time)
+			bm[addr][len(bm[addr])-1].SetEnd(l.Time)
 		}
-
 		srvm[addr].IsBroken = isBroken
+
+		// 過負荷検査
+		isOverloaded := srvs.CheckOverloaded(overloadJudgment, overloadTime)
+		if isOverloaded {
+			if len(srvs.Logs) == overloadJudgment {
+				// 1 件目のログから過負荷だった場合
+				om[addr] = append(om[addr], Trouble{Addr: addr})
+			} else if !srvs.IsOverloaded {
+				// 非過負荷状態から過負荷状態になる場合
+				om[addr] = append(om[addr], NewTrouble(addr, srvs.Logs[len(srvs.Logs)-overloadJudgment].Time))
+			}
+		} else if srvs.IsOverloaded {
+			// 過負荷状態から非過負荷状態になる場合
+			om[addr][len(om[addr])-1].SetEnd(l.Time)
+		}
+		srvm[addr].IsOverloaded = isOverloaded
 	}
 
-	return tm
+	return bm, om
 }

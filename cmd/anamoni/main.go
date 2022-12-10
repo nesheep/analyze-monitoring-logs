@@ -12,9 +12,13 @@ import (
 )
 
 var n int
+var m int
+var t int
 
 func init() {
 	flag.IntVar(&n, "n", 1, "n 回以上連続してタイムアウトした場合にサーバーの故障とみなす。")
+	flag.IntVar(&m, "m", 1, "直近 m 回の平均応答時間が t ミリ秒を超えた場合はサーバが過負荷状態になっているとみなす。")
+	flag.IntVar(&t, "t", 100, "直近 m 回の平均応答時間が t ミリ秒を超えた場合はサーバが過負荷状態になっているとみなす。")
 }
 
 func main() {
@@ -26,6 +30,14 @@ func main() {
 
 	if n < 1 {
 		log.Fatal("n は 1 以上の整数を指定してください")
+	}
+
+	if m < 1 {
+		log.Fatal("m は 1 以上の整数を指定してください")
+	}
+
+	if t < 1 {
+		log.Fatal("t は 1 以上の整数を指定してください")
 	}
 
 	filename := args[0]
@@ -55,10 +67,21 @@ func main() {
 
 	logs.Sort()
 
-	tm := anamoni.Analyze(logs, n)
+	bm, om := anamoni.Analyze(logs, n, m, t)
 
-	tmSlice := tm.ToSlice()
-	for i, t := range tmSlice {
+	bmSlice := bm.ToSlice()
+	if len(bmSlice) > 0 {
+		fmt.Println("サーバー故障期間")
+	}
+	for i, t := range bmSlice {
+		fmt.Printf("%d\t%s\t%s\t%s\n", i+1, t.Addr, formatTime(t.Start), formatTime(t.End))
+	}
+
+	omSlice := om.ToSlice()
+	if len(omSlice) > 0 {
+		fmt.Println("サーバー過負荷期間")
+	}
+	for i, t := range omSlice {
 		fmt.Printf("%d\t%s\t%s\t%s\n", i+1, t.Addr, formatTime(t.Start), formatTime(t.End))
 	}
 }
