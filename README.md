@@ -14,10 +14,13 @@ go install github.com/nesheep/analyze-monitoring-logs/cmd/anamoni@latest
 anamoni <OPTIONS> <FILENAME>
 ```
 
-- OPTIONS
-  - n: n 回以上連続してタイムアウトした場合にサーバーの故障とみなす (default 1)
-  - m: 直近 m 回の平均応答時間が t ミリ秒を超えた場合はサーバが過負荷状態になっているとみなす (default 1)
-  - t: 直近 m 回の平均応答時間が t ミリ秒を超えた場合はサーバが過負荷状態になっているとみなす (default 100)
+### OPTIONS
+
+- n: n 回以上連続してタイムアウトした場合にサーバー故障とみなす (default 1)
+- m: 直近 m 回の平均応答時間が t ミリ秒を超えた場合にサーバー過負荷状態とみなす (default 1)
+- t: 直近 m 回の平均応答時間が t ミリ秒を超えた場合にサーバー過負荷状態とみなす (default 100)
+
+### Example
 
 ```bash
 $ anamoni -n 3 -m 2 -t 100 testdata/3.csv
