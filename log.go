@@ -106,6 +106,8 @@ func (l Log) Subnet() string {
 // Logs はログファイルの全ての行の情報を格納する。
 type Logs []Log
 
+// RaadLogs は CSV ファイルの filename を受け取って Logs を返す。
+// CSV や ログの形式が無効の場合は error を返す。
 func ReadLogs(filename string) (Logs, error) {
 	f, err := os.Open(filename)
 	if err != nil {

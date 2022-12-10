@@ -7,6 +7,7 @@ type ServerStatus struct {
 	IsOverloaded bool
 }
 
+// CheckBroken は現在故障中か否かを判定する。
 func (ss ServerStatus) CheckBroken(judgment int) bool {
 	if len(ss.Logs) < judgment {
 		return false
@@ -22,6 +23,7 @@ func (ss ServerStatus) CheckBroken(judgment int) bool {
 	return isBroken
 }
 
+// CheckOverloaded は現在過負荷状態か否かを判定する。
 func (ss ServerStatus) CheckOverloaded(judgment, t int) bool {
 	if len(ss.Logs) < judgment {
 		return false

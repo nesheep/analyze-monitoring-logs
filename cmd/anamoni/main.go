@@ -23,7 +23,7 @@ func main() {
 	flag.Parse()
 	args := flag.Args()
 	if len(args) != 1 {
-		log.Fatal("引数が足りません")
+		log.Fatal("ログファイルを 1 つ指定してください")
 	}
 
 	if n < 1 {

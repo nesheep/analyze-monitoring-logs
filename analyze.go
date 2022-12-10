@@ -1,6 +1,6 @@
 package anamoni
 
-// Analyze は logs 分析を行って TroublesMap を返す。
+// Analyze は logs の分析を行ってサーバー故障期間、サーバー過負荷期間、サブネット故障期間を Troubles として返す。
 func Analyze(logs Logs, breakJudgment, overloadJudgment, overloadTime int) (Troubles, Troubles, Troubles) {
 	brokenMap := TroublesMap{}
 	overlaodMap := TroublesMap{}
@@ -21,7 +21,7 @@ func Analyze(logs Logs, breakJudgment, overloadJudgment, overloadTime int) (Trou
 		isBroken := srvStat.CheckBroken(breakJudgment)
 		if isBroken {
 			if len(srvStat.Logs) == breakJudgment {
-				// 1 件目のログから故障していた場合
+				// 1 件目のログから故障していた場合: Start は nil とする
 				brokenMap[addr] = append(brokenMap[addr], NewTrouble(addr, NewDuration(nil, nil)))
 			} else if !srvStat.IsBroken {
 				// 非故障中から故障中になる場合
@@ -38,7 +38,7 @@ func Analyze(logs Logs, breakJudgment, overloadJudgment, overloadTime int) (Trou
 		isOverloaded := srvStat.CheckOverloaded(overloadJudgment, overloadTime)
 		if isOverloaded {
 			if len(srvStat.Logs) == overloadJudgment {
-				// 1 件目のログから過負荷だった場合
+				// 1 件目のログから過負荷だった場合: Start は nil とする
 				overlaodMap[addr] = append(overlaodMap[addr], NewTrouble(addr, NewDuration(nil, nil)))
 			} else if !srvStat.IsOverloaded {
 				// 非過負荷状態から過負荷状態になる場合
