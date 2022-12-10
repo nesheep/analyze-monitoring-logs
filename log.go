@@ -1,9 +1,12 @@
 package anamoni
 
 import (
+	"encoding/csv"
 	"errors"
 	"fmt"
+	"io"
 	"net"
+	"os"
 	"sort"
 	"strconv"
 	"strings"
@@ -102,6 +105,36 @@ func (l Log) Subnet() string {
 
 // Logs はログファイルの全ての行の情報を格納する。
 type Logs []Log
+
+func ReadLogs(filename string) (Logs, error) {
+	f, err := os.Open(filename)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+
+	r := csv.NewReader(f)
+	logs := Logs{}
+	for {
+		record, err := r.Read()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return nil, err
+		}
+
+		l, err := ParseLog(record)
+		if err != nil {
+			return nil, err
+		}
+
+		logs = append(logs, l)
+	}
+
+	logs.Sort()
+	return logs, nil
+}
 
 // Sort は Logs を Time の古い順にソートする。
 func (ls Logs) Sort() {
