@@ -5,24 +5,18 @@ import (
 	"time"
 )
 
-// Trouble 障害情報を保持する構造体。
-type Trouble struct {
-	Addr  string
+type Duration struct {
 	Start *time.Time
 	End   *time.Time
 }
 
-func NewTrouble(addr string, start time.Time) Trouble {
-	return Trouble{Addr: addr, Start: &start}
+func NewDuration(start, end *time.Time) Duration {
+	return Duration{Start: start, End: end}
 }
 
-func (t *Trouble) SetEnd(end time.Time) {
-	t.End = &end
-}
-
-func (t *Trouble) intersection(addr string, o Trouble) *Trouble {
-	start := *t.Start
-	end := *t.End
+func (d *Duration) Intersection(o Duration) *Duration {
+	start := *d.Start
+	end := *d.End
 	if start.Before(*o.Start) {
 		start = *o.Start
 	}
@@ -32,22 +26,35 @@ func (t *Trouble) intersection(addr string, o Trouble) *Trouble {
 	if start.After(end) {
 		return nil
 	}
-	return &Trouble{
-		Addr:  addr,
+	return &Duration{
 		Start: &start,
 		End:   &end,
 	}
 }
 
+// Trouble 障害情報を保持する構造体。
+type Trouble struct {
+	Addr string
+	Duration
+}
+
+func NewTrouble(addr string, d Duration) Trouble {
+	return Trouble{Addr: addr, Duration: d}
+}
+
+func (t *Trouble) SetEnd(end time.Time) {
+	t.End = &end
+}
+
 type Troubles []Trouble
 
-func (ts Troubles) intersections(addr string, o Troubles) Troubles {
+func (ts Troubles) Intersections(addr string, o Troubles) Troubles {
 	is := Troubles{}
 	for _, a := range ts {
 		for _, b := range o {
-			intersection := a.intersection(addr, b)
+			intersection := a.Duration.Intersection(b.Duration)
 			if intersection != nil {
-				is = append(is, *intersection)
+				is = append(is, NewTrouble(addr, *intersection))
 			}
 		}
 	}

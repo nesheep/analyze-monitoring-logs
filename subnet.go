@@ -10,7 +10,7 @@ func NewSubnet(addr string) *Subnet {
 	return &Subnet{Addr: addr, Servers: []string{}}
 }
 
-func (s Subnet) has(server string) bool {
+func (s Subnet) Has(server string) bool {
 	for _, srv := range s.Servers {
 		if srv == server {
 			return true
@@ -21,15 +21,15 @@ func (s Subnet) has(server string) bool {
 
 type Subnets []Subnet
 
-func (ss Subnets) Brokens(bm TroublesMap) Troubles {
+func (ss Subnets) Brokens(brokenMap TroublesMap) Troubles {
 	ts := Troubles{}
 	for _, sn := range ss {
-		tmp := bm[sn.Servers[0]]
-		for k, troubles := range bm {
-			if !sn.has(k) {
+		tmp := brokenMap[sn.Servers[0]]
+		for k, troubles := range brokenMap {
+			if !sn.Has(k) {
 				continue
 			}
-			intersections := troubles.intersections(sn.Addr, tmp)
+			intersections := troubles.Intersections(sn.Addr, tmp)
 			tmp = intersections
 		}
 		ts = append(ts, tmp...)

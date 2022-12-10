@@ -124,21 +124,21 @@ func (ls Logs) Servers() []string {
 }
 
 func (ls Logs) Subnets() Subnets {
-	subnetMap := map[string]*Subnet{}
-	serverMap := map[string]bool{}
+	snMap := map[string]*Subnet{}
+	srvMap := map[string]bool{}
 	for _, l := range ls {
 		subnet := l.Subnet()
 		addr := l.Address()
-		if subnetMap[subnet] == nil {
-			subnetMap[subnet] = NewSubnet(subnet)
+		if snMap[subnet] == nil {
+			snMap[subnet] = NewSubnet(subnet)
 		}
-		if !serverMap[addr] {
-			serverMap[addr] = true
-			subnetMap[subnet].Servers = append(subnetMap[subnet].Servers, addr)
+		if !srvMap[addr] {
+			srvMap[addr] = true
+			snMap[subnet].Servers = append(snMap[subnet].Servers, addr)
 		}
 	}
 	sl := Subnets{}
-	for _, v := range subnetMap {
+	for _, v := range snMap {
 		sl = append(sl, *v)
 	}
 	return sl
