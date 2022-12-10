@@ -1,7 +1,6 @@
 package main
 
 import (
-	"anamoni"
 	"encoding/csv"
 	"flag"
 	"fmt"
@@ -9,6 +8,8 @@ import (
 	"log"
 	"os"
 	"time"
+
+	anamoni "github.com/nesheep/analyze-monitoring-logs"
 )
 
 var n int

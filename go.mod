@@ -1,4 +1,4 @@
-module anamoni
+module github.com/nesheep/analyze-monitoring-logs
 
 go 1.19
 
